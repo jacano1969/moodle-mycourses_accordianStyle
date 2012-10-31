@@ -1,0 +1,182 @@
+--- lib.php	2012-10-24 16:47:48.771300124 +0500
++++ libupd.php	2012-10-24 16:46:10.541297493 +0500
+@@ -839,49 +839,138 @@ function print_log_graph($course, $useri
+ }
+ 
+ 
++
+ function print_overview($courses, array $remote_courses=array()) {
+-    global $CFG, $USER, $DB, $OUTPUT;
+ 
+-    $htmlarray = array();
+-    if ($modules = $DB->get_records('modules')) {
+-        foreach ($modules as $mod) {
+-            if (file_exists(dirname(dirname(__FILE__)).'/mod/'.$mod->name.'/lib.php')) {
+-                include_once(dirname(dirname(__FILE__)).'/mod/'.$mod->name.'/lib.php');
+-                $fname = $mod->name.'_print_overview';
+-                if (function_exists($fname)) {
+-                    $fname($courses,$htmlarray);
+-                }
+-            }
+-        }
+-    }
+-    foreach ($courses as $course) {
+-        echo $OUTPUT->box_start('coursebox');
+-        $attributes = array('title' => s($course->fullname));
+-        if (empty($course->visible)) {
+-            $attributes['class'] = 'dimmed';
+-        }
+-        echo $OUTPUT->heading(html_writer::link(
+-            new moodle_url('/course/view.php', array('id' => $course->id)), format_string($course->fullname), $attributes), 3);
+-        if (array_key_exists($course->id,$htmlarray)) {
+-            foreach ($htmlarray[$course->id] as $modname => $html) {
+-                echo $html;
+-            }
+-        }
+-        echo $OUTPUT->box_end();
+-    }
+-
+-    if (!empty($remote_courses)) {
+-        echo $OUTPUT->heading(get_string('remotecourses', 'mnet'));
+-    }
+-    foreach ($remote_courses as $course) {
+-        echo $OUTPUT->box_start('coursebox');
+-        $attributes = array('title' => s($course->fullname));
+-        echo $OUTPUT->heading(html_writer::link(
+-            new moodle_url('/auth/mnet/jump.php', array('hostid' => $course->hostid, 'wantsurl' => '/course/view.php?id='.$course->remoteid)),
+-            format_string($course->shortname),
+-            $attributes) . ' (' . format_string($course->hostname) . ')', 3);
+-        echo $OUTPUT->box_end();
+-    }
++	global $CFG, $USER, $DB, $OUTPUT;
++	$htmlarray = array();
++
++	if ($modules = $DB->get_records('modules')) {
++
++		foreach ($modules as $mod) {
++
++			if (file_exists(dirname(dirname(__FILE__)).'/mod/'.$mod->name.'/lib.php')) {
++
++				include_once(dirname(dirname(__FILE__)).'/mod/'.$mod->name.'/lib.php');
++
++				$fname = $mod->name.'_print_overview';
++
++				if (function_exists($fname)) {
++
++					$fname($courses,$htmlarray);
++
++				}
++
++			}
++
++		}
++
++	}
++
++
++	echo $OUTPUT->box_start('coursebox');
++
++	$attributes = array('title' => s($course->fullname));
++
++	if (empty($course->visible)) {
++
++		$attributes['class'] = 'dimmed';
++
++	}
++
++	$month = (int)  date('m');
++	if($month==6 || $month==7 || $month==8 ){
++
++		$currentSemester=strtotime("-3 months", time());
++	}elseif($month==9){
++
++		$currentSemester=strtotime("-1 months", time());//1
++	}
++	elseif($month==10){
++
++		$currentSemester=strtotime("-2 months", time());
++	}
++	elseif($month==11){
++
++		$currentSemester=strtotime("-3 months", time());
++	}
++	elseif($month==12){
++
++		$currentSemester=strtotime("-5 months", time());
++	}else{
++
++		$currentSemester=strtotime("-6 months", time());
++	}
++
++
++
++
++	$i++;
++
++
++	echo '<h2><a href="JavaScript:doMenu('.$i.');" id=x'.$i.'><img src="../course/arw_on.gif">&nbsp;</a><a style="color:#0000A0">'.'Current Courses'.'</a></h2>';
++
++
++	echo '<div id='.$i.' style="display: block;" >';
++
++	foreach($courses as $course ){
++		if($course->startdate > $currentSemester){
++			$i++;
++			echo $OUTPUT->heading(html_writer::link(
++			new moodle_url('/course/view.php', array('id' => $course->id)),'&nbsp;&nbsp;&nbsp;'.$course->fullname, $attributes), 1);
++			if (array_key_exists($course->id,$htmlarray)) {
++				foreach ($htmlarray[$course->id] as $modname => $html) {
++					echo  $html;
++				}
++			}
++		}
++	}
++	echo '</div>';
++
++
++
++	$i++;
++	echo '<h2><a href="JavaScript:doMenu('.$i.');" id=x'.$i.'><img src="../course/arw_off.gif">&nbsp;</a><a style="color:#0000A0">'.'Previous Courses'.'</a></h2>';
++	echo '<div id='.$i.' style="display: none;" >';
++	foreach($courses as $course ){
++		if($course->startdate < $currentSemester){
++			$i++;
++			echo $OUTPUT->heading(html_writer::link(
++			new moodle_url('/course/view.php', array('id' => $course->id)),'&nbsp;&nbsp;&nbsp;'.$course->fullname, $attributes), 1);
++			if (array_key_exists($course->id,$htmlarray)) {
++				foreach ($htmlarray[$course->id] as $modname => $html) {
++					echo  $html;
++				}
++			}}
++	}
++	echo '</div>';
++
++	echo $OUTPUT->box_end();
++
++	if (!empty($remote_courses)) {
++
++		echo $OUTPUT->heading(get_string('remotecourses', 'mnet'));
++
++	}
++
++	foreach ($remote_courses as $course) {
++
++		echo $OUTPUT->box_start('coursebox');
++
++		$attributes = array('title' => s($course->fullname));
++
++		echo $OUTPUT->heading(html_writer::link(
++
++		new moodle_url('/auth/mnet/jump.php', array('hostid' => $course->hostid, 'wantsurl' => '/course/view.php?id='.$course->remoteid)),
++
++		format_string($course->shortname),
++
++		$attributes) . ' (' . format_string($course->hostname) . ')', 3);
++
++		echo $OUTPUT->box_end();
++
++	}
++
+ }
+ 
+ /**
